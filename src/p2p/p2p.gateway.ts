@@ -1,13 +1,18 @@
 import {
   SubscribeMessage,
   WebSocketGateway,
+  OnGatewayInit,
   WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({ cors: { origin: '*' } })
-export class P2pGateway {
+export class P2pGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('VideoGateway');
 
@@ -24,6 +29,11 @@ export class P2pGateway {
   @SubscribeMessage('candidate')
   handleCandidate(client: Socket, payload: any): void {
     client.broadcast.emit('candidate', payload);
+  }
+
+  @SubscribeMessage('hangup')
+  handleHangUp(client: Socket): void {
+    client.broadcast.emit('hangup');
   }
 
   afterInit(server: Server) {

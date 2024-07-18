@@ -9,7 +9,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 
-@WebSocketGateway({ cors: { origin: '*' } })
+@WebSocketGateway({ cors: true })
 export class P2pGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {

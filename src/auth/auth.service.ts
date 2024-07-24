@@ -55,9 +55,6 @@ export class AuthService {
   }
 
   private async generateToken(userId: string) {
-    const token = await this.jwtService.signAsync({ id: userId });
-    return {
-      token,
-    };
+    return await this.jwtService.signAsync({ id: userId });
   }
 }

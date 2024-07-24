@@ -33,7 +33,7 @@ export class AuthService {
 
     return {
       user: newUser,
-      token: this.generateToken(newUser.id),
+      token: await this.generateToken(newUser.id),
     };
   }
 
@@ -50,7 +50,7 @@ export class AuthService {
 
     return {
       user: user,
-      token: this.generateToken(user.id),
+      token: await this.generateToken(user.id),
     };
   }
 

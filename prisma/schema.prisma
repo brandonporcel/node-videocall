@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String  @id @default(uuid())
+  username    String
+  email       String  @unique()
+  password    String
+  avatarUrl   String  @map("avatar_url")
+  phoneNumber String  @map("phone_number")
+  isValidated Boolean @map("is_validated")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  ownedAgendas    Agenda[]   @relation("OwnedAgendas")
+  targetedAgendas Agenda[]   @relation("TargetedAgendas")
+  UserCall        UserCall[]
+
+  @@map("users")
+}
+
+model Agenda {
+  id          String @id @default(uuid())
+  contactId   Int    @map("contact_id")
+  fullname    String
+  phoneNumber String @map("phone_number")
+  ownerId     String @map("owner_id")
+  targetId    String @map("target_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  owner  User @relation("OwnedAgendas", fields: [ownerId], references: [id])
+  target User @relation("TargetedAgendas", fields: [targetId], references: [id])
+
+  @@map("agendas")
+}
+
+model UserChat {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  chatId String @map("chat_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("user_chats")
+}
+
+model Chat {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("chats")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  chatId    String   @map("chat_id")
+  senderId  String   @map("sender_id")
+  recivedAt DateTime @map("recived_at")
+  readedAt  DateTime @map("readed_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("messages")
+}
+
+model UserCall {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  callId String @map("call_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+  call Call @relation(fields: [callId], references: [id])
+
+  @@map("user_calls")
+}
+
+model Call {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  UserCall UserCall[]
+
+  @@map("calls")
+}

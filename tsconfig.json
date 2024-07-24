@@ -10,6 +10,13 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "@config/*": ["src/users/*"],
+      "@common/*": ["src/common/*"],
+      "@auth/*": ["src/auth/*"],
+      "@users/*": ["src/users/*"],
+      "@p2p/*": ["src/p2p/*"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,

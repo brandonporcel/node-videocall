@@ -31,7 +31,10 @@ export class AuthService {
       ...userData,
     });
 
-    return this.generatePayload(newUser.id);
+    return {
+      user: newUser,
+      token: this.generateToken(newUser.id),
+    };
   }
 
   async login({ email, password }: LoginDto) {
@@ -45,10 +48,13 @@ export class AuthService {
       throw new UnauthorizedException('password is wrong');
     }
 
-    return this.generatePayload(user.id);
+    return {
+      user: user,
+      token: this.generateToken(user.id),
+    };
   }
 
-  private async generatePayload(userId: string) {
+  private async generateToken(userId: string) {
     const token = await this.jwtService.signAsync({ id: userId });
     return {
       token,

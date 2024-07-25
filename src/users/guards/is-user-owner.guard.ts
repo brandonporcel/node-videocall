@@ -4,7 +4,7 @@ import {
   ExecutionContext,
   Injectable,
 } from '@nestjs/common';
-import { UserWithPermissions } from '@users/interfaces/user-profile.interface';
+import { User } from '@prisma/client';
 import { UsersService } from '@users/users.service';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class IsUserOwnerGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const params = request.params;
 
-    const user: UserWithPermissions = request.user;
+    const user: User = request.user;
     if (!user) throw new BadRequestException('User not found');
 
     const targetUserId = params.userId;

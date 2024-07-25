@@ -11,14 +11,15 @@ import { Auth } from '@auth/decorators/auth.decorator';
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 
-  @Get(':contactId/users/:userId')
+  @Get()
+  @Auth()
   findAll(@GetUser() user: User) {
     return this.contactService.findAll(user);
   }
 
   @Put()
   @Auth()
-  update(@GetUser() user: User, @Body() req: CreateContactDto) {
-    return this.contactService.update(user, req.contacts);
+  update(@GetUser() user: User, @Body() createContactDto: CreateContactDto) {
+    return this.contactService.update(user, createContactDto);
   }
 }

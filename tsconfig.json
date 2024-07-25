@@ -15,7 +15,7 @@
       "@common/*": ["src/common/*"],
       "@auth/*": ["src/auth/*"],
       "@users/*": ["src/users/*"],
-      "@p2p/*": ["src/p2p/*"]
+      "@p2p/*": ["src/calls/*"]
     },
     "incremental": true,
     "skipLibCheck": true,

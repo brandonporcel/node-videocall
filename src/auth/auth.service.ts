@@ -21,7 +21,7 @@ export class AuthService {
     const user = await this.usersService.user({ email: userData.email });
 
     if (user) {
-      throw new BadRequestException('User already exists');
+      throw new BadRequestException('Email already exists');
     }
 
     const newUser = await this.usersService.createUser({

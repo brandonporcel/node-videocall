@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { P2pModule } from './p2p/p2p.module';
+import { CallModule } from './call/call.module';
 import { appConfig, databaseConfig, jwtConfig, validateConfig } from './config';
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from '@common/common.module';
@@ -17,7 +17,7 @@ import { ContactModule } from './contact/contact.module';
     AuthModule,
     CommonModule,
     UsersModule,
-    P2pModule,
+    CallModule,
     ContactModule,
   ],
   controllers: [],

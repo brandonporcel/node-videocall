@@ -4,6 +4,7 @@ import { ContactService } from './contact.service';
 import { GetUser } from '@common/decorators/get-user.decorator';
 import { User } from '@prisma/client';
 import { ApiTags } from '@nestjs/swagger';
+import { Auth } from '@auth/decorators/auth.decorator';
 
 @ApiTags('Contacts')
 @Controller('contacts')
@@ -16,7 +17,8 @@ export class ContactController {
   }
 
   @Put()
-  update(@GetUser() user: User, @Body() contacts: CreateContactDto[]) {
-    return this.contactService.update(user, contacts);
+  @Auth()
+  update(@GetUser() user: User, @Body() req: CreateContactDto) {
+    return this.contactService.update(user, req.contacts);
   }
 }

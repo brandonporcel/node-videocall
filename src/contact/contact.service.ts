@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { CreateContactDto } from './dto/create-contact.dto';
+import { Injectable, Logger } from '@nestjs/common';
+import { ContactDto, CreateContactDto } from './dto/create-contact.dto';
 import { User } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 
@@ -16,7 +16,7 @@ export class ContactService {
     });
   }
 
-  update(user: User, contacts: CreateContactDto[]) {
+  update(user: User, contacts: ContactDto[]) {
     this.prismaService.contact.deleteMany({
       where: {
         ownerId: user.id,

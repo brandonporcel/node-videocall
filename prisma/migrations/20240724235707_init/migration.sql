@@ -1,14 +1,5 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Users` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropTable
-DROP TABLE "Users";
-
 -- CreateTable
-CREATE TABLE "User" (
+CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -20,14 +11,13 @@ CREATE TABLE "User" (
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Agenda" (
+CREATE TABLE "contacts" (
     "id" TEXT NOT NULL,
-    "contact_id" INTEGER NOT NULL,
-    "fullname" TEXT NOT NULL,
+    "display" TEXT NOT NULL,
     "phone_number" TEXT NOT NULL,
     "owner_id" TEXT NOT NULL,
     "target_id" TEXT NOT NULL,
@@ -35,11 +25,11 @@ CREATE TABLE "Agenda" (
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "Agenda_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "contacts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "UserChat" (
+CREATE TABLE "user_chats" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "chat_id" TEXT NOT NULL,
@@ -47,21 +37,20 @@ CREATE TABLE "UserChat" (
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "UserChat_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "user_chats_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Chat" (
+CREATE TABLE "chats" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "Chat_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "chats_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Message" (
+CREATE TABLE "messages" (
     "id" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "chat_id" TEXT NOT NULL,
@@ -72,39 +61,40 @@ CREATE TABLE "Message" (
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "messages_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "UserCall" (
+CREATE TABLE "user_calls" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "call_id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "UserCall_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "user_calls_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Call" (
+CREATE TABLE "calls" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "Call_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "calls_pkey" PRIMARY KEY ("id")
 );
 
--- AddForeignKey
-ALTER TABLE "Agenda" ADD CONSTRAINT "Agenda_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- AddForeignKey
-ALTER TABLE "Agenda" ADD CONSTRAINT "Agenda_target_id_fkey" FOREIGN KEY ("target_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "contacts" ADD CONSTRAINT "contacts_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "UserCall" ADD CONSTRAINT "UserCall_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "contacts" ADD CONSTRAINT "contacts_target_id_fkey" FOREIGN KEY ("target_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "UserCall" ADD CONSTRAINT "UserCall_call_id_fkey" FOREIGN KEY ("call_id") REFERENCES "Call"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "user_calls" ADD CONSTRAINT "user_calls_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_calls" ADD CONSTRAINT "user_calls_call_id_fkey" FOREIGN KEY ("call_id") REFERENCES "calls"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

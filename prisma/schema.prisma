@@ -26,29 +26,30 @@ model User {
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  ownedAgendas    Agenda[]   @relation("OwnedAgendas")
-  targetedAgendas Agenda[]   @relation("TargetedAgendas")
-  UserCall        UserCall[]
+  ownedContacts    Contact[]     @relation("OwnedContacts")
+  targetedContacts Contact[]     @relation("TargetedContacts")
+  UserCall         UserCall[]
+  UserSockets      UserSockets[]
 
   @@map("users")
 }
 
-model Agenda {
-  id          String @id @default(uuid())
-  contactId   Int    @map("contact_id")
-  fullname    String
-  phoneNumber String @map("phone_number")
-  ownerId     String @map("owner_id")
-  targetId    String @map("target_id")
+model Contact {
+  id          String  @id @default(uuid())
+  display     String
+  phoneNumber String  @map("phone_number")
+  ownerId     String  @map("owner_id")
+  targetId    String? @map("target_id")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  owner  User @relation("OwnedAgendas", fields: [ownerId], references: [id])
-  target User @relation("TargetedAgendas", fields: [targetId], references: [id])
+  owner  User  @relation("OwnedContacts", fields: [ownerId], references: [id])
+  target User? @relation("TargetedContacts", fields: [targetId], references: [id])
 
-  @@map("agendas")
+  @@index([ownerId, phoneNumber], name: "ownerId_phoneNumber_unique")
+  @@map("contacts")
 }
 
 model UserChat {
@@ -110,4 +111,19 @@ model Call {
   UserCall UserCall[]
 
   @@map("calls")
+}
+
+model UserSockets {
+  id       String @id @default(uuid())
+  userId   String @map("user_id")
+  socketId String @map("socket_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([socketId])
+  @@map("user_sockets")
 }

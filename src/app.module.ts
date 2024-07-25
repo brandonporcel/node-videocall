@@ -5,6 +5,7 @@ import { appConfig, databaseConfig, jwtConfig, validateConfig } from './config';
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from '@common/common.module';
 import { UsersModule } from './users/users.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UsersModule } from './users/users.module';
     CommonModule,
     UsersModule,
     P2pModule,
+    ContactModule,
   ],
   controllers: [],
   providers: [],

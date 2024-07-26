@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  Logger,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -36,12 +35,6 @@ export class UsersController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Body() user: UpdateUserDto,
   ) {
-    // const logger = new Logger();
-    // logger.log('hola updateUser');
-    // if (user.avatar && user.avatar.startsWith('data:image/')) {
-    //   const imagePath = await this.usersService.saveBase64Image(user.avatar);
-    //   user.avatar = imagePath;
-    // }
     return this.usersService.updateUser({ where: { id: userId }, data: user });
   }
 

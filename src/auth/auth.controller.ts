@@ -31,6 +31,9 @@ export class AuthController {
   @Get('me')
   @Auth()
   me(@GetUser() user: User) {
+    const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+    user.avatarUrl = `${BASE_URL}${user.avatarUrl}`;
+    user.avatarUrl;
     return user;
   }
 }

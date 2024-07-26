@@ -1,10 +1,12 @@
 import { Transform } from 'class-transformer';
-import { IsString, MinLength } from 'class-validator';
+import { IsString, MaxLength, MinLength, IsBase64 } from 'class-validator';
 
 export class UpdateUserDto {
   @Transform(({ value }) => value.trim())
   @IsString()
   @MinLength(1)
-  username: string;
-  // avatar: string;
+  username?: string;
+  @IsString()
+  @MinLength(1)
+  avatarUrl: string;
 }

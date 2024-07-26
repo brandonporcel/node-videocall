@@ -6,4 +6,5 @@ export class UpdateUserDto {
   @IsString()
   @MinLength(1)
   username: string;
+  // avatar: string;
 }

@@ -21,7 +21,9 @@ export class ContactService {
     this.prismaService.contact.deleteMany({
       where: {
         ownerId: user.id,
-        phoneNumber: { notIn: contacts.map((contact) => contact.phoneNumber) },
+        phoneNumber: {
+          notIn: contacts.map((contact) => contact.phoneNumber.trim()),
+        },
       },
     });
 
@@ -34,7 +36,7 @@ export class ContactService {
         where: {
           ownerId_phoneNumber_unique: {
             ownerId: user.id,
-            phoneNumber: contact.phoneNumber,
+            phoneNumber: contact.phoneNumber.trim(),
           },
         },
         update: {

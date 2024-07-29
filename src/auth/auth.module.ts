@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -6,6 +6,7 @@ import { UsersModule } from '@users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
+@Global()
 @Module({
   imports: [
     JwtModule.registerAsync({
@@ -17,7 +18,7 @@ import { AuthService } from './auth.service';
         signOptions: { expiresIn: configService.get('jwt.expiresIn') },
       }),
     }),
-    forwardRef(() => UsersModule),
+    UsersModule,
   ],
   providers: [AuthService],
   controllers: [AuthController],

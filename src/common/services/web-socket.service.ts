@@ -6,13 +6,17 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { PrismaService } from './prisma.service';
+import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 
+@WebSocketGateway({ cors: true })
 @Injectable()
 export class WebSocketService {
+  @WebSocketServer() server: Server;
   logger = new Logger('WebSocketService');
 
   constructor(
@@ -34,7 +38,7 @@ export class WebSocketService {
       const user = await this.usersService.authUser(payload.id);
       if (!user) throw new BadRequestException('User not found');
 
-      await this.prismaService.userSockets.create({
+      await this.prismaService.session.create({
         data: { userId: user.id, socketId: socket.id },
       });
 
@@ -46,8 +50,17 @@ export class WebSocketService {
   }
 
   async onDisconnect(socket: Socket) {
-    return this.prismaService.userSockets.delete({
+    return this.prismaService.session.deleteMany({
       where: { socketId: socket.id },
+    });
+  }
+
+  //Every minute
+  @Cron('0 * * * * *')
+  async updateConnections() {
+    const connectedClients = Array.from(this.server.sockets.sockets.keys());
+    await this.prismaService.session.deleteMany({
+      where: { socketId: { notIn: connectedClients } },
     });
   }
 }

@@ -32,7 +32,7 @@ export class ContactService {
       const targetId = target?.id;
       return this.prismaService.contact.upsert({
         where: {
-          phoneNumber_ownerId: {
+          ownerId_phoneNumber_unique: {
             ownerId: user.id,
             phoneNumber: contact.phoneNumber,
           },

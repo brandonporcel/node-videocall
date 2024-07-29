@@ -12,21 +12,33 @@ export class CallGateway {
 
   constructor(private readonly callService: CallService) {}
 
+  @SubscribeMessage('create-call')
+  async handleCreateCall(client: Socket, payload: any): Promise<void> {
+    await this.callService.handleCreateCall(client, payload);
+  }
+
+  @SubscribeMessage('accept-call')
+  async handleAcceptCall(client: Socket, payload: any): Promise<void> {
+    await this.callService.handleAcceptCall(client, payload);
+  }
+
   @SubscribeMessage('offer')
-  handleOffer(client: Socket, payload: any): void {}
+  async handleOffer(client: Socket, payload: any): Promise<void> {
+    await this.callService.handleOffer(client, payload);
+  }
 
   @SubscribeMessage('answer')
-  handleAnswer(client: Socket, payload: any): void {
-    client.broadcast.emit('answer', payload);
+  async handleAnswer(client: Socket, payload: any): Promise<void> {
+    await this.callService.handleAnswer(client, payload);
   }
 
   @SubscribeMessage('candidate')
-  handleCandidate(client: Socket, payload: any): void {
-    client.broadcast.emit('candidate', payload);
+  async handleCandidate(client: Socket, payload: any): Promise<void> {
+    await this.callService.handleCandidate(client, payload);
   }
 
   @SubscribeMessage('hangup')
-  handleHangUp(client: Socket): void {
-    client.broadcast.emit('hangup');
+  async handleHangUp(client: Socket): Promise<void> {
+    await this.callService.handleHangUp(client);
   }
 }

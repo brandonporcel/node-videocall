@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { HandleErrorsInterceptor } from '@common/interceptors/handle-errors.interceptor';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -21,6 +22,7 @@ async function bootstrap() {
   app.enableCors();
 
   app.useGlobalInterceptors(new HandleErrorsInterceptor());
+  app.useStaticAssets({ root: join(__dirname, '..', 'public') });
 
   app.useGlobalPipes(
     new ValidationPipe({

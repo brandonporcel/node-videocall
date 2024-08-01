@@ -36,9 +36,12 @@ export class UsersController {
   @IsUserOwner()
   updateUser(
     @Param('userId', ParseUUIDPipe) userId: string,
-    @Body() user: UpdateUserDto,
+    @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.updateUser({ where: { id: userId }, data: user });
+    return this.usersService.updateUser({
+      where: { id: userId },
+      data: updateUserDto,
+    });
   }
 
   @Delete(':userId')

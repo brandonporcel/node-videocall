@@ -4,6 +4,7 @@ import { CryptoDto } from './dto/crypto.dto';
 @Injectable()
 export class CryptoService {
   crypto(createCryptoDto: CryptoDto) {
+    console.log(createCryptoDto);
     const { N, T, D, SEED } = createCryptoDto;
     const TID = SEED + (T - 1);
     const dni = TID / Math.pow(10, 14);

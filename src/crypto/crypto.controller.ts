@@ -1,4 +1,5 @@
-import { Controller, Get, Body } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
+import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { CryptoService } from './crypto.service';
 import { CryptoDto } from './dto/crypto.dto';
 
@@ -6,8 +7,10 @@ import { CryptoDto } from './dto/crypto.dto';
 export class CryptoController {
   constructor(private readonly cryptoService: CryptoService) {}
 
-  @Get()
-  crypto(@Body() createCryptoDto: CryptoDto) {
-    return this.cryptoService.crypto(createCryptoDto);
+  @Post('')
+  @ApiExcludeEndpoint()
+  crypto(@Body() a: CryptoDto) {
+    console.log(a);
+    return this.cryptoService.crypto(a);
   }
 }

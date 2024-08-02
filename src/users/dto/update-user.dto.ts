@@ -1,9 +1,25 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsString, MinLength } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateUserDto {
+  @ApiProperty({
+    description: 'Username',
+    example: 'John Doe',
+    nullable: true,
+  })
   @Transform(({ value }) => value.trim())
   @IsString()
-  @MinLength(1)
+  @IsOptional()
   username: string;
+
+  @ApiProperty({
+    description: 'Base 64 profile image',
+    example: 'base64',
+    nullable: true,
+  })
+  @Transform(({ value }) => value.trim())
+  @IsString()
+  @IsOptional()
+  profileImage: string;
 }

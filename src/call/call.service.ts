@@ -36,7 +36,7 @@ export class CallService {
       where: { userId: payload.targetId },
     });
     targets.map((target) => {
-      client.to(target.socketId).emit('recive-call', {
+      this.server.to(target.socketId).emit('recive-call', {
         members: [session.user],
         callId: call.id,
       });

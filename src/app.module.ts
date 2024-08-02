@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+
 import { CallModule } from './call/call.module';
 import { appConfig, databaseConfig, jwtConfig, validateConfig } from './config';
 import { UsersModule } from './users/users.module';
 import { ContactModule } from './contact/contact.module';
 import { CommonModule } from '@common/common.module';
 import { AuthModule } from '@auth/auth.module';
-import { ScheduleModule } from '@nestjs/schedule';
+import { CryptoModule } from './crypto/crypto.module';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     UsersModule,
     CallModule,
     ContactModule,
+    CryptoModule,
   ],
   controllers: [],
   providers: [],

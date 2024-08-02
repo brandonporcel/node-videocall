@@ -54,3 +54,14 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+
+
+# Ignorar todos los archivos dentro de uploads
+public/uploads/*
+
+# No ignorar el propio directorio uploads
+!public/uploads/
+
+# No ignorar el archivo .gitkeep para asegurar que el directorio se mantenga
+!public/uploads/.gitkeep

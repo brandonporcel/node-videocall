@@ -26,29 +26,10 @@ model User {
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  ownedContacts    Contact[]  @relation("OwnedContacts")
-  targetedContacts Contact[]  @relation("TargetedContacts")
-  UserCall         UserCall[]
-  Sessions         Session[]
+  UserCall UserCall[]
+  Sessions Session[]
 
   @@map("users")
-}
-
-model Contact {
-  display     String
-  phoneNumber String  @map("phone_number")
-  ownerId     String  @map("owner_id")
-  targetId    String? @map("target_id")
-
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
-
-  owner  User  @relation("OwnedContacts", fields: [ownerId], references: [id])
-  target User? @relation("TargetedContacts", fields: [targetId], references: [id])
-
-  @@id([ownerId, phoneNumber], name: "ownerId_phoneNumber_unique")
-  @@map("contacts")
 }
 
 model UserChat {
@@ -64,8 +45,8 @@ model UserChat {
 }
 
 model Chat {
-  id String @id @default(uuid())
-
+  id        String   @id @default(uuid())
+  name      String?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 

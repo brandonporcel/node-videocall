@@ -2,10 +2,34 @@ import { Injectable } from '@nestjs/common';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { User } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
+import { GetContactsDto } from './dto/get-contact.dto';
 
 @Injectable()
 export class ContactService {
   constructor(private readonly prismaService: PrismaService) {}
+
+  async getContacts(_user: User, getContactsDto: GetContactsDto) {
+    const phoneNumbers = getContactsDto.contacts.map(
+      (contact) => contact.phoneNumber,
+    );
+
+    const x: any = {
+      filtered: [],
+      usersWithoutApp: [],
+      usersWithAlreadyChat: [],
+    };
+
+    const matchingUsers = await this.prismaService.user.findMany({
+      where: {
+        phoneNumber: {
+          in: phoneNumbers,
+        },
+      },
+    });
+
+    x.filtered = matchingUsers;
+    return x;
+  }
 
   findAll(user: User) {
     return this.prismaService.contact.findMany({

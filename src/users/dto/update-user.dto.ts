@@ -21,5 +21,5 @@ export class UpdateUserDto {
   @Transform(({ value }) => value.trim())
   @IsString()
   @IsOptional()
-  profileImage: string;
+  avatarUrl: string;
 }

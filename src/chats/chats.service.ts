@@ -3,6 +3,7 @@ import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from '@common/services/prisma.service';
 import { Chat, User } from '@prisma/client';
+import { SearchDto } from './dto/search.dto';
 @WebSocketGateway({ cors: true })
 @Injectable()
 export class ChatsService {
@@ -11,7 +12,7 @@ export class ChatsService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async getChats(user: User) {
-    return await this.prismaService.chat.findMany({
+    const chats = await this.prismaService.chat.findMany({
       select: {
         id: true,
         name: true,
@@ -19,22 +20,45 @@ export class ChatsService {
           where: {
             userId: user.id,
           },
-          select: {
-            id: true,
-            userId: true,
-            User: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-                avatarUrl: true,
-                phoneNumber: true,
+        },
+      },
+    });
+
+    const noMeChatsPromises = chats.map(async (chat) => {
+      return this.prismaService.chat.findMany({
+        select: {
+          id: true,
+          name: true,
+          UserChat: {
+            where: {
+              userId: {
+                not: user.id,
+              },
+              chatId: chat.id,
+            },
+            select: {
+              User: {
+                select: {
+                  id: true,
+                  username: true,
+                  email: true,
+                  avatarUrl: true,
+                  phoneNumber: true,
+                },
               },
             },
           },
         },
-      },
+      });
     });
+
+    const noMeChatsArray = await Promise.all(noMeChatsPromises);
+    const noMeChats = noMeChatsArray.flat();
+
+    console.log('Chats:', chats);
+    console.log('NoMeChats:', noMeChats);
+
+    return noMeChats;
   }
 
   async getChatHistorial(chatId: string) {
@@ -51,7 +75,7 @@ export class ChatsService {
     const session = await this.getSession(client);
 
     await this.handleUserChats(chat, members);
-
+    console.log('session', session);
     const message = await this.prismaService.message.create({
       data: {
         content: payload.message,
@@ -132,5 +156,26 @@ export class ChatsService {
     return await this.prismaService.session.findUniqueOrThrow({
       where: { socketId: client.id },
     });
+  }
+
+  async search({ query, contacts }: SearchDto) {
+    const contactz = ['+54 9 11 444 5555'];
+
+    const x: any = {
+      filtered: [],
+      usersWithAccount: [],
+    };
+
+    const matchingUsers = await this.prismaService.user.findMany({
+      where: {
+        phoneNumber: {
+          in: contactz,
+        },
+      },
+    });
+
+    x.filtered = matchingUsers;
+    x.usersWithAccount = matchingUsers;
+    return x;
   }
 }

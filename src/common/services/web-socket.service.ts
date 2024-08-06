@@ -56,7 +56,8 @@ export class WebSocketService {
   }
 
   //Every minute
-  @Cron('0 * * * * *')
+  // @Cron('0 * * * * *')
+  @Cron('*/5 * * * * *')
   async updateConnections() {
     const connectedClients = Array.from(this.server.sockets.sockets.keys());
     await this.prismaService.session.deleteMany({

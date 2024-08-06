@@ -64,8 +64,7 @@ export class UsersService {
       data,
       where,
     });
-    console.log('user', user);
-    console.log('user.avatarUrl', user.avatarUrl);
+
     const BASE_URL = process.env.BASE_URL;
     user.avatarUrl = `${BASE_URL}${data.avatarUrl}`;
     return user;

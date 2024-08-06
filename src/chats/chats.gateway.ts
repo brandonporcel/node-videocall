@@ -8,6 +8,8 @@ import { ChatsService } from './chats.service';
 
 @WebSocketGateway({ cors: true })
 export class ChatsGateway {
+  @WebSocketServer() server: Server;
+
   constructor(private readonly chatsService: ChatsService) {}
 
   @SubscribeMessage('send-message')

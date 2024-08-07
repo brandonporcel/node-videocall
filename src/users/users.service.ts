@@ -50,24 +50,22 @@ export class UsersService {
     });
   }
 
-  async updateUser(params: {
-    where: Prisma.UserWhereUniqueInput;
-    data: Prisma.UserUpdateInput;
-  }): Promise<any> {
+  async updateUser(
+    params: {
+      where: Prisma.UserWhereUniqueInput;
+      data: Prisma.UserUpdateInput;
+    },
+    userId: string,
+  ): Promise<any> {
     const { where, data } = params;
     if (data.avatarUrl) {
       data.avatarUrl = await this.utilsService.saveBase64Image(
         data.avatarUrl as string,
       );
     }
-    const user = await this.prisma.user.update({
-      data,
-      where,
-    });
+    await this.prisma.user.update({ data, where });
 
-    const BASE_URL = process.env.BASE_URL;
-    user.avatarUrl = `${BASE_URL}${data.avatarUrl}`;
-    return user;
+    return await this.prisma.user.findUnique({ where: { id: userId } });
   }
 
   async deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {

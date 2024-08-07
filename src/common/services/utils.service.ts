@@ -26,4 +26,13 @@ export class UtilsService {
     await fs.writeFile(filePath, base64Data, 'base64');
     return `uploads/${filename}`;
   }
+
+  addBaseUrlToAvatar(items: any[]): any[] {
+    return items.map((item) => ({
+      ...item,
+      avatarUrl: item.avatarUrl
+        ? `${process.env.BASE_URL}${item.avatarUrl}`
+        : null,
+    }));
+  }
 }

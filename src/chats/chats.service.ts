@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { PrismaService } from '@common/services/prisma.service';
 import { Chat, User } from '@prisma/client';
+import { PrismaService } from '@common/services/prisma.service';
 import { SearchDto } from './dto/search.dto';
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -15,7 +15,6 @@ export class ChatsService {
     const chats = await this.prismaService.chat.findMany({
       select: {
         id: true,
-        name: true,
         UserChat: {
           where: {
             userId: user.id,
@@ -55,27 +54,26 @@ export class ChatsService {
     const noMeChatsArray = await Promise.all(noMeChatsPromises);
     const noMeChats = noMeChatsArray.flat();
 
-    console.log('Chats:', chats);
-    console.log('NoMeChats:', noMeChats);
-
     return noMeChats;
   }
 
   async getChatHistorial(chatId: string) {
     return await this.prismaService.message.findMany({
       where: { chatId },
+      take: 50,
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
   }
 
   // SEND MESSAGES METHODS
-
   async handleSendMessage(client: Socket, payload: any) {
     const members = payload.members;
     const chat = await this.getChat(payload);
     const session = await this.getSession(client);
 
     await this.handleUserChats(chat, members);
-    console.log('session', session);
     const message = await this.prismaService.message.create({
       data: {
         content: payload.message,
@@ -97,7 +95,7 @@ export class ChatsService {
 
   private async handleUserChats(chat: Chat, members: User[]) {
     const userChats = await this.prismaService.userChat.findMany({
-      where: { userId: chat.id },
+      where: { chatId: chat.id },
     });
     if (userChats.length !== 0) return;
 
@@ -123,23 +121,22 @@ export class ChatsService {
 
   private async getChat(payload: any, withMembers = false) {
     const { members, chatId } = payload;
+    if (members.length !== 2 && members.length !== 1) {
+      throw new Error('Invalid number of members');
+    }
 
-    if (members.length === 1) {
-      if (!chatId) {
-        return this.prismaService.chat.create({
-          data: {
-            name: null,
-          },
-        });
-      }
-      return this.prismaService.chat.findUnique({
-        where: {
-          id: chatId,
+    if (!chatId && members.length === 2) {
+      return this.prismaService.chat.create({
+        data: {
+          name: null,
         },
       });
     }
-
-    throw new Error('Invalid number of members');
+    return this.prismaService.chat.findUnique({
+      where: {
+        id: chatId,
+      },
+    });
   }
 
   private async getUserChat(chatId: string) {}

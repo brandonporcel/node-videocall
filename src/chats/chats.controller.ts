@@ -1,5 +1,3 @@
-import { Auth } from '@auth/decorators/auth.decorator';
-import { GetUser } from '@common/decorators/get-user.decorator';
 import {
   Body,
   Controller,
@@ -9,6 +7,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { Auth } from '@auth/decorators/auth.decorator';
+import { GetUser } from '@common/decorators/get-user.decorator';
 import { ChatsService } from './chats.service';
 import { SearchDto } from './dto/search.dto';
 
@@ -24,16 +24,13 @@ export class ChatsController {
 
   @Get('historial/:chatId')
   @Auth()
-  getChatHistorial(
-    @Param('chatId', ParseUUIDPipe) chatId: string,
-    @GetUser() user: User,
-  ) {
+  getChatHistorial(@Param('chatId', ParseUUIDPipe) chatId: string) {
     return this.chatsService.getChatHistorial(chatId);
   }
 
   @Post('search')
   @Auth()
-  search(@GetUser() user: User, @Body() searchDto: SearchDto) {
+  search(@Body() searchDto: SearchDto) {
     return this.chatsService.search(searchDto);
   }
 }

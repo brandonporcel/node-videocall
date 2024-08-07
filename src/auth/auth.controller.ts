@@ -31,7 +31,9 @@ export class AuthController {
   @Get('me')
   @Auth()
   me(@GetUser() user: User) {
-    user.avatarUrl = `${process.env.BASE_URL}${user.avatarUrl}`;
+    user.avatarUrl = user.avatarUrl
+      ? `${process.env.BASE_URL}${user.avatarUrl}`
+      : null;
     return user;
   }
 }

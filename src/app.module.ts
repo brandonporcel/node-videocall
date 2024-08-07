@@ -24,7 +24,7 @@ import { ChatsModule } from './chats/chats.module';
     CallModule,
     ContactModule,
     CryptoModule,
-    // ChatsModule,
+    ChatsModule,
   ],
   controllers: [],
   providers: [],

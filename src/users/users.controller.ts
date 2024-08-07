@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -14,9 +15,11 @@ import { UserPaginationDto } from './dto/user-pagination.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { IsUserOwner } from './decorators/is-user-owner.decorator';
 import { Auth } from '@auth/decorators/auth.decorator';
+import { TransformUserInterceptor } from '@auth/interceptors/user.interceptor';
 
 @ApiTags('Users')
 @Controller('users')
+@UseInterceptors(TransformUserInterceptor)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -38,10 +41,13 @@ export class UsersController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.updateUser({
-      where: { id: userId },
-      data: updateUserDto,
-    });
+    return this.usersService.updateUser(
+      {
+        where: { id: userId },
+        data: updateUserDto,
+      },
+      userId,
+    );
   }
 
   @Delete(':userId')

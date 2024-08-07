@@ -4,14 +4,19 @@ import { Server, Socket } from 'socket.io';
 import { Chat, User } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { SearchDto } from './dto/search.dto';
+import { UtilsService } from '@common/services/utils.service';
+import { ChatsDto } from './dto/chats.dto';
 @WebSocketGateway({ cors: true })
 @Injectable()
 export class ChatsService {
   @WebSocketServer() server: Server;
 
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly utilsService: UtilsService,
+  ) {}
 
-  async getChats(user: User) {
+  async getChats(user: User, chatsDto: ChatsDto) {
     const chats = await this.prismaService.chat.findMany({
       select: {
         id: true,
@@ -53,6 +58,25 @@ export class ChatsService {
 
     const noMeChatsArray = await Promise.all(noMeChatsPromises);
     const noMeChats = noMeChatsArray.flat();
+
+    const contactsMap = new Map();
+    chatsDto.contacts.forEach((contact) => {
+      contactsMap.set(contact.phoneNumber, contact.display);
+    });
+
+    noMeChats.forEach((chat) => {
+      chat.UserChat = chat.UserChat.map((userChat) => {
+        const contactDisplayName = contactsMap.get(userChat.User.phoneNumber);
+        return {
+          ...userChat,
+          User: {
+            ...userChat.User,
+            ...this.utilsService.addBaseUrlToAvatar([userChat.User])[0],
+            username: contactDisplayName || userChat.User.username,
+          },
+        };
+      });
+    });
 
     return noMeChats;
   }
@@ -119,13 +143,32 @@ export class ChatsService {
     // this.server.to(client.id).emit('update-read-at', { payload });
   }
 
-  private async getChat(payload: any, withMembers = false) {
+  private async getChat(payload: any) {
     const { members, chatId } = payload;
     if (members.length !== 2 && members.length !== 1) {
       throw new Error('Invalid number of members');
     }
 
     if (!chatId && members.length === 2) {
+      const userIds = members.map((m: any) => m.id);
+      const matchingUsers = await this.prismaService.userChat.findMany({
+        where: {
+          userId: {
+            in: userIds,
+          },
+        },
+      });
+      if (matchingUsers.length === 2) {
+        const [user1, user2] = matchingUsers;
+        if (user1.chatId === user2.chatId) {
+          return this.prismaService.chat.findUnique({
+            where: {
+              id: user1.chatId,
+            },
+          });
+        }
+      }
+
       return this.prismaService.chat.create({
         data: {
           name: null,
@@ -138,8 +181,6 @@ export class ChatsService {
       },
     });
   }
-
-  private async getUserChat(chatId: string) {}
 
   private async getUnReadMessages(client: Socket) {
     return await this.prismaService.message.findMany({

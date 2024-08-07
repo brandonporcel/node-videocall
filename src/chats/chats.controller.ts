@@ -11,15 +11,16 @@ import { Auth } from '@auth/decorators/auth.decorator';
 import { GetUser } from '@common/decorators/get-user.decorator';
 import { ChatsService } from './chats.service';
 import { SearchDto } from './dto/search.dto';
+import { ChatsDto } from './dto/chats.dto';
 
 @Controller('chats')
 export class ChatsController {
   constructor(private readonly chatsService: ChatsService) {}
 
-  @Get()
+  @Post()
   @Auth()
-  getChats(@GetUser() user: User) {
-    return this.chatsService.getChats(user);
+  getChats(@GetUser() user: User, @Body() chatsDto: ChatsDto) {
+    return this.chatsService.getChats(user, chatsDto);
   }
 
   @Get('historial/:chatId')

@@ -18,7 +18,7 @@ export class ContactService {
 
     const x: any = {
       filtered: [],
-      usersWithoutApp: [],
+      usersForInvite: [],
       usersWithAlreadyChat: [],
     };
 
@@ -46,6 +46,16 @@ export class ContactService {
       });
 
     x.filtered = this.utilsService.addBaseUrlToAvatar(x.filtered);
+
+    const matchingPhoneNumbers = new Set(
+      matchingUsers.map(({ phoneNumber }) => phoneNumber),
+    );
+    x.usersForInvite = getContactsDto.contacts
+      .filter((contact) => !matchingPhoneNumbers.has(contact.phoneNumber))
+      .map((contact) => ({
+        display: contact.display,
+        phoneNumber: contact.phoneNumber,
+      }));
 
     return x;
   }

@@ -18,27 +18,29 @@ export class ChatsService {
 
   async getChats(user: User, chatsDto: ChatsDto) {
     const chats = await this.prismaService.chat.findMany({
-      select: {
-        id: true,
+      where: {
         UserChat: {
-          where: {
+          some: {
             userId: user.id,
           },
         },
       },
+      select: {
+        id: true,
+        name: true,
+        UserChat: true,
+      },
     });
 
     const noMeChatsPromises = chats.map(async (chat) => {
-      return this.prismaService.chat.findMany({
+      return this.prismaService.chat.findUnique({
+        where: { id: chat.id },
         select: {
           id: true,
           name: true,
           UserChat: {
             where: {
-              userId: {
-                not: user.id,
-              },
-              chatId: chat.id,
+              userId: { not: user.id },
             },
             select: {
               User: {
@@ -102,16 +104,16 @@ export class ChatsService {
       data: {
         content: payload.message,
         chatId: chat.id,
-        senderId: session.userId,
+        senderId: payload.senderId,
         receivedAt: new Date(),
         readedAt: null,
       },
     });
-
     const targets = await this.prismaService.session.findMany({
       select: { socketId: true },
       where: { userId: members[0].id },
     });
+
     targets.map((target) => {
       this.server.to(target.socketId).emit('receive-message', message);
     });

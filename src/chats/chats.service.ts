@@ -99,6 +99,7 @@ export class ChatsService {
     const chat = await this.getChat(payload);
     const session = await this.getSession(client);
 
+    await this.handleUserChats(chat, members);
     const message = await this.prismaService.message.create({
       data: {
         content: payload.message,
@@ -115,6 +116,22 @@ export class ChatsService {
 
     targets.map((target) => {
       this.server.to(target.socketId).emit('receive-message', message);
+    });
+  }
+
+  private async handleUserChats(chat: Chat, members: User[]) {
+    const userChats = await this.prismaService.userChat.findMany({
+      where: { chatId: chat.id },
+    });
+    if (userChats.length !== 0) return;
+
+    members.map(async (user) => {
+      await this.prismaService.userChat.create({
+        data: {
+          userId: user.id,
+          chatId: chat.id,
+        },
+      });
     });
   }
 

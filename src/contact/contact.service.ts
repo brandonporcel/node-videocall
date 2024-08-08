@@ -15,13 +15,10 @@ export class ContactService {
     const phoneNumbers = getContactsDto.contacts.map(
       (contact) => contact.phoneNumber,
     );
-
     const x: any = {
       filtered: [],
-      usersWithoutApp: [],
-      usersWithAlreadyChat: [],
+      usersForInvite: [],
     };
-
     const matchingUsers = await this.prismaService.user.findMany({
       where: {
         phoneNumber: {
@@ -29,12 +26,10 @@ export class ContactService {
         },
       },
     });
-
     const contactsMap = new Map();
     getContactsDto.contacts.forEach((contact) => {
       contactsMap.set(contact.phoneNumber, contact.display);
     });
-
     x.filtered = matchingUsers
       .filter(({ phoneNumber }) => phoneNumber !== user.phoneNumber)
       .map((user) => {
@@ -44,9 +39,16 @@ export class ContactService {
           username: contactDisplayName || user.username,
         };
       });
-
     x.filtered = this.utilsService.addBaseUrlToAvatar(x.filtered);
-
+    const matchingPhoneNumbers = new Set(
+      matchingUsers.map(({ phoneNumber }) => phoneNumber),
+    );
+    x.usersForInvite = getContactsDto.contacts
+      .filter((contact) => !matchingPhoneNumbers.has(contact.phoneNumber))
+      .map((contact) => ({
+        display: contact.display,
+        phoneNumber: contact.phoneNumber,
+      }));
     return x;
   }
 }

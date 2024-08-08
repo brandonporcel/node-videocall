@@ -86,7 +86,8 @@ export class CallService {
 
   async handleHangUp(client: Socket): Promise<void> {
     const socketIds = await this.getCallSocketIds(client);
-    socketIds.map((socketId) => this.server.to(socketId).emit('hangup'));
+    console.log({ length: socketIds.length });
+    socketIds.map((socketId) => this.server.to(socketId).emit('hangup-server'));
   }
 
   // PRIVATE HANDLERS

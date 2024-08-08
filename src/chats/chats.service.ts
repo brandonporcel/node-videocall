@@ -92,55 +92,84 @@ export class ChatsService {
   }
 
   // SEND MESSAGES METHODS
+  // CHECK
+  // async handleSendMessage(client: Socket, payload: any) {
+  //   const members = payload.members;
+  //   const chat = await this.getChat(payload);
+  //   // const session = await this.getSession(client);
+
+  //   const message = await this.prismaService.message.create({
+  //     data: {
+  //       content: payload.message,
+  //       chatId: chat.id,
+  //       senderId: payload.senderId,
+  //       receivedAt: new Date(),
+  //       readedAt: null,
+  //     },
+  //   });
+
+  //   const targets = await this.prismaService.session.findMany({
+  //     select: { socketId: true },
+  //     where: { userId: members[0].id },
+  //   });
+  //   targets.map((target) => {
+  //     this.server.to(target.socketId).emit('receive-message', message);
+  //   });
+  // }
   async handleSendMessage(client: Socket, payload: any) {
     const members = payload.members;
     const chat = await this.getChat(payload);
     const session = await this.getSession(client);
 
+    await this.handleUserChats(chat, members);
     const message = await this.prismaService.message.create({
       data: {
         content: payload.message,
         chatId: chat.id,
-        senderId: session.userId,
+        senderId: payload.senderId,
         receivedAt: new Date(),
         readedAt: null,
       },
     });
-
     const targets = await this.prismaService.session.findMany({
       select: { socketId: true },
       where: { userId: members[0].id },
     });
+
     targets.map((target) => {
       this.server.to(target.socketId).emit('receive-message', message);
     });
   }
 
-  async handleReceiveMessage(client: Socket, payload: any) {
-    const messages = await this.getUnReadMessages(client);
-
-    await this.prismaService.message.update({
-      where: { id: payload.message.id },
-      data: { readedAt: new Date() },
-    });
-    // this.server.to(client.id).emit('update-read-at', { payload });
-  }
-
   private async getChat(payload: any) {
     const { members, chatId } = payload;
-    if (!(members.length >= 2)) {
+    if (members.length !== 2 && members.length !== 1) {
       throw new Error('Invalid number of members');
     }
 
-    if (!chatId) {
+    if (!chatId && members.length === 2) {
+      const userIds = members.map((m: any) => m.id);
+      const matchingUsers = await this.prismaService.userChat.findMany({
+        where: {
+          userId: {
+            in: userIds,
+          },
+        },
+      });
+      if (matchingUsers.length === 2) {
+        const [user1, user2] = matchingUsers;
+        if (user1.chatId === user2.chatId) {
+          return this.prismaService.chat.findUnique({
+            where: {
+              id: user1.chatId,
+            },
+          });
+        }
+      }
+
       return this.prismaService.chat.create({
         data: {
           name: null,
-          UserChat: {
-            createMany: {
-              data: members.map((member: User) => ({ userId: member.id })),
-            },
-          },
         },
       });
     }
@@ -150,6 +179,61 @@ export class ChatsService {
       },
     });
   }
+
+  private async handleUserChats(chat: Chat, members: User[]) {
+    const userChats = await this.prismaService.userChat.findMany({
+      where: { chatId: chat.id },
+    });
+    if (userChats.length !== 0) return;
+
+    members.map(async (user) => {
+      await this.prismaService.userChat.create({
+        data: {
+          userId: user.id,
+          chatId: chat.id,
+        },
+      });
+    });
+  }
+  async handleReceiveMessage(client: Socket, payload: any) {
+    const messages = await this.getUnReadMessages(client);
+
+    await this.prismaService.message.update({
+      where: { id: payload.message.id },
+      data: { readedAt: new Date() },
+    });
+    // this.server.to(client.id).emit('update-read-at', { payload });
+  }
+  // CHECK
+
+  // private async getChat(payload: any) {
+  //   const { members, chatId } = payload;
+  //   console.log('members', members);
+
+  //   if (!members.includes((el: any) => el.id === payload.senderId)) {
+  //     members.push({
+  //       id: payload.senderId,
+  //     });
+  //   }
+
+  //   if (!chatId) {
+  //     return this.prismaService.chat.create({
+  //       data: {
+  //         name: null,
+  //         UserChat: {
+  //           createMany: {
+  //             data: members.map((member: User) => ({ userId: member.id })),
+  //           },
+  //         },
+  //       },
+  //     });
+  //   }
+  //   return this.prismaService.chat.findUnique({
+  //     where: {
+  //       id: chatId,
+  //     },
+  //   });
+  // }
 
   private async getUnReadMessages(client: Socket) {
     return await this.prismaService.message.findMany({

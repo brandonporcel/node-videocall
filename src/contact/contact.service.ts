@@ -76,8 +76,10 @@ export class ContactService {
 
     return {
       filtered: matchingUsers,
-      forInvite: phoneNumbers.filter(
-        (x) => !matchingUsers.some((y) => y.phoneNumber === x),
+      usersForInvite: getContactsDto.contacts.filter(
+        (el) =>
+          !matchingUsers.some((mU) => mU.phoneNumber === el.phoneNumber) &&
+          el.phoneNumber !== user.phoneNumber,
       ),
     };
   }

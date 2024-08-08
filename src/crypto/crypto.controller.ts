@@ -10,7 +10,6 @@ export class CryptoController {
   @Post('')
   @ApiExcludeEndpoint()
   getKeys(@Body() a: CryptoDto) {
-    console.log(a);
     return this.cryptoService.getKeys(a);
   }
 }

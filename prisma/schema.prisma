@@ -51,6 +51,7 @@ model UserChat {
 model Chat {
   id        String     @id @default(uuid())
   name      String?
+  type      ChatType   @default(direct)
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @default(now()) @updatedAt @map("updated_at")
   UserChat  UserChat[]
@@ -115,4 +116,9 @@ model Session {
 
   @@unique([socketId])
   @@map("sessions")
+}
+
+enum ChatType {
+  group
+  direct
 }

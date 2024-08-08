@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CreateContactDto } from './dto/create-contact.dto';
-import { User } from '@prisma/client';
+import { ChatType, User } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { GetContactsDto } from './dto/get-contact.dto';
 
@@ -8,16 +7,10 @@ import { GetContactsDto } from './dto/get-contact.dto';
 export class ContactService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async getContacts(_user: User, getContactsDto: GetContactsDto) {
+  async getContacts(user: User, getContactsDto: GetContactsDto) {
     const phoneNumbers = getContactsDto.contacts.map(
       (contact) => contact.phoneNumber,
     );
-
-    const x: any = {
-      filtered: [],
-      usersWithoutApp: [],
-      usersWithAlreadyChat: [],
-    };
 
     const matchingUsers = await this.prismaService.user.findMany({
       where: {
@@ -25,10 +18,47 @@ export class ContactService {
           in: phoneNumbers,
         },
       },
+      include: {
+        UserChat: {
+          include: {
+            Chat: {
+              include: {
+                UserChat: {
+                  where: {
+                    userId: {
+                      not: user.id,
+                    },
+                  },
+                  include: { User: true },
+                },
+              },
+            },
+          },
+          where: {
+            Chat: {
+              type: ChatType.direct,
+              UserChat: {
+                some: {
+                  userId: user.id,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    matchingUsers.forEach((user) => {
+      if (user.UserChat.length) {
+        user.UserChat[0].Chat.name = user.username;
+      }
     });
 
-    x.filtered = matchingUsers;
-    return x;
+    return {
+      filtered: matchingUsers,
+      forInvite: phoneNumbers.filter(
+        (x) => !matchingUsers.some((y) => y.phoneNumber === x),
+      ),
+    };
   }
 
   // findAll(user: User) {

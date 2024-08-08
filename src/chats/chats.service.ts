@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Chat, User } from '@prisma/client';
@@ -73,7 +73,6 @@ export class ChatsService {
     const chat = await this.getChat(payload);
     const session = await this.getSession(client);
 
-    await this.handleUserChats(chat, members);
     const message = await this.prismaService.message.create({
       data: {
         content: payload.message,
@@ -93,22 +92,6 @@ export class ChatsService {
     });
   }
 
-  private async handleUserChats(chat: Chat, members: User[]) {
-    const userChats = await this.prismaService.userChat.findMany({
-      where: { chatId: chat.id },
-    });
-    if (userChats.length !== 0) return;
-
-    members.map(async (user) => {
-      await this.prismaService.userChat.create({
-        data: {
-          userId: user.id,
-          chatId: chat.id,
-        },
-      });
-    });
-  }
-
   async handleReceiveMessage(client: Socket, payload: any) {
     const messages = await this.getUnReadMessages(client);
 
@@ -121,14 +104,19 @@ export class ChatsService {
 
   private async getChat(payload: any, withMembers = false) {
     const { members, chatId } = payload;
-    if (members.length !== 2 && members.length !== 1) {
+    if (!(members.length >= 2)) {
       throw new Error('Invalid number of members');
     }
 
-    if (!chatId && members.length === 2) {
+    if (!chatId) {
       return this.prismaService.chat.create({
         data: {
           name: null,
+          UserChat: {
+            createMany: {
+              data: members.map((member: User) => ({ userId: member.id })),
+            },
+          },
         },
       });
     }

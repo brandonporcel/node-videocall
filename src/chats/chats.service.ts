@@ -1,13 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { Chat, User } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { SearchDto } from './dto/search.dto';
 import { UtilsService } from '@common/services/utils.service';
 import { ChatsDto } from './dto/chats.dto';
-@WebSocketGateway({ cors: true })
+import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+
 @Injectable()
+@WebSocketGateway({ cors: true })
 export class ChatsService {
   @WebSocketServer() server: Server;
 
@@ -18,67 +19,74 @@ export class ChatsService {
 
   async getChats(user: User, chatsDto: ChatsDto) {
     const chats = await this.prismaService.chat.findMany({
-      select: {
-        id: true,
+      include: {
         UserChat: {
           where: {
+            userId: { not: user.id },
+          },
+          include: {
+            User: true,
+          },
+        },
+        Message: {
+          take: 50,
+        },
+      },
+      where: {
+        UserChat: {
+          some: {
             userId: user.id,
           },
         },
       },
     });
 
-    const noMeChatsPromises = chats.map(async (chat) => {
-      return this.prismaService.chat.findMany({
-        select: {
-          id: true,
-          name: true,
-          UserChat: {
-            where: {
-              userId: {
-                not: user.id,
-              },
-              chatId: chat.id,
-            },
-            select: {
-              User: {
-                select: {
-                  id: true,
-                  username: true,
-                  email: true,
-                  avatarUrl: true,
-                  phoneNumber: true,
-                },
-              },
-            },
-          },
-        },
-      });
-    });
-
-    const noMeChatsArray = await Promise.all(noMeChatsPromises);
-    const noMeChats = noMeChatsArray.flat();
-
     const contactsMap = new Map();
     chatsDto.contacts.forEach((contact) => {
       contactsMap.set(contact.phoneNumber, contact.display);
     });
 
-    noMeChats.forEach((chat) => {
-      chat.UserChat = chat.UserChat.map((userChat) => {
-        const contactDisplayName = contactsMap.get(userChat.User.phoneNumber);
-        return {
-          ...userChat,
-          User: {
-            ...userChat.User,
-            ...this.utilsService.addBaseUrlToAvatar([userChat.User])[0],
-            username: contactDisplayName || userChat.User.username,
-          },
-        };
-      });
-    });
+    const parsedChats = chats.map((chat) => ({
+      ...chat,
+      UserChat: chat.UserChat.map((userChat) => ({
+        ...userChat,
+        User: {
+          ...this.utilsService.addBaseUrlToAvatar([userChat.User])[0],
+          username:
+            contactsMap.get(userChat.User.phoneNumber) ||
+            userChat.User.username,
+        },
+      })),
+    }));
 
-    return noMeChats;
+    return parsedChats;
+  }
+
+  async getChat(fromId: string, toId: string) {
+    return await this.prismaService.chat.findFirst({
+      where: {
+        UserChat: {
+          every: {
+            userId: {
+              in: [fromId, toId],
+            },
+          },
+        },
+      },
+      include: {
+        UserChat: {
+          where: {
+            userId: { not: fromId },
+          },
+          include: {
+            User: true,
+          },
+        },
+        Message: {
+          take: 50,
+        },
+      },
+    });
   }
 
   async getChatHistorial(chatId: string) {
@@ -116,68 +124,56 @@ export class ChatsService {
   //     this.server.to(target.socketId).emit('receive-message', message);
   //   });
   // }
-  async handleSendMessage(client: Socket, payload: any) {
-    const members = payload.members;
-    const chat = await this.getChat(payload);
-    const session = await this.getSession(client);
-
-    await this.handleUserChats(chat, members);
+  async handleSendMessage(
+    client: Socket,
+    payload: { to: string; message: string },
+  ) {
+    const sender = await this.getSession(client);
+    const { isNew, chat } = await this.getOrCreateChat([
+      sender.userId,
+      payload.to,
+    ]);
     const message = await this.prismaService.message.create({
       data: {
         content: payload.message,
         chatId: chat.id,
-        senderId: payload.senderId,
+        senderId: sender.userId,
         receivedAt: new Date(),
         readedAt: null,
       },
     });
     const targets = await this.prismaService.session.findMany({
       select: { socketId: true },
-      where: { userId: members[0].id },
+      where: { userId: { in: [payload.to, sender.userId] } },
     });
 
     targets.map((target) => {
-      this.server.to(target.socketId).emit('receive-message', message);
+      this.server
+        .to(target.socketId)
+        .emit(`receive-message/${chat.id}`, message);
     });
+
+    if (isNew) {
+      this.server.to(client.id).emit('chat-created');
+    }
   }
 
-  private async getChat(payload: any) {
-    const { members, chatId } = payload;
-    if (members.length !== 2 && members.length !== 1) {
-      throw new Error('Invalid number of members');
-    }
-
-    if (!chatId && members.length === 2) {
-      const userIds = members.map((m: any) => m.id);
-      const matchingUsers = await this.prismaService.userChat.findMany({
-        where: {
-          userId: {
-            in: userIds,
+  private async getOrCreateChat(userIds: string[]) {
+    const chat = await this.getChat(userIds[0], userIds[1]);
+    if (chat) return { isNew: false, chat };
+    const newChat = await this.prismaService.chat.create({
+      data: {
+        UserChat: {
+          createMany: {
+            data: userIds.map((userId) => ({ userId })),
           },
         },
-      });
-      if (matchingUsers.length === 2) {
-        const [user1, user2] = matchingUsers;
-        if (user1.chatId === user2.chatId) {
-          return this.prismaService.chat.findUnique({
-            where: {
-              id: user1.chatId,
-            },
-          });
-        }
-      }
-
-      return this.prismaService.chat.create({
-        data: {
-          name: null,
-        },
-      });
-    }
-    return this.prismaService.chat.findUnique({
-      where: {
-        id: chatId,
+      },
+      include: {
+        UserChat: true,
       },
     });
+    return { isNew: true, chat: newChat };
   }
 
   private async handleUserChats(chat: Chat, members: User[]) {

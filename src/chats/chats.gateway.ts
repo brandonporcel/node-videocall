@@ -12,7 +12,7 @@ export class ChatsGateway {
 
   constructor(private readonly chatsService: ChatsService) {}
 
-  @SubscribeMessage('send-message')
+  @SubscribeMessage('send-direct-message')
   handleMessage(client: Socket, payload: any) {
     this.chatsService.handleSendMessage(client, payload);
   }

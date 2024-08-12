@@ -91,7 +91,6 @@ export class CallService {
 
   async handleHangUp(client: Socket): Promise<void> {
     const socketIds = await this.getCallSocketIds(client);
-    console.log({ length: socketIds.length });
     socketIds.map((socketId) => this.server.to(socketId).emit('hangup-server'));
   }
 

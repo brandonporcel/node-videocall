@@ -23,6 +23,12 @@ export class ChatsController {
     return this.chatsService.getChats(user, chatsDto);
   }
 
+  @Get(':targetId')
+  @Auth()
+  getChat(@Param('targetId') targetId: string, @GetUser() user: User) {
+    return this.chatsService.getChat(user.id, targetId);
+  }
+
   @Get('historial/:chatId')
   @Auth()
   getChatHistorial(@Param('chatId', ParseUUIDPipe) chatId: string) {

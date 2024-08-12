@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { User, Prisma } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { UserPaginationDto } from './dto/user-pagination.dto';

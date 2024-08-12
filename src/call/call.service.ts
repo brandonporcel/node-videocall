@@ -1,4 +1,5 @@
 import { PrismaService } from '@common/services/prisma.service';
+import { UtilsService } from '@common/services/utils.service';
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
@@ -9,7 +10,10 @@ import { Server, Socket } from 'socket.io';
 export class CallService {
   @WebSocketServer() server: Server;
 
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly utilsService: UtilsService,
+  ) {}
 
   // CALL CREATE AND JOIN METHODS
 
@@ -37,7 +41,8 @@ export class CallService {
     });
     targets.map((target) => {
       this.server.to(target.socketId).emit('recive-call', {
-        members: [session.user],
+        // members: [session.user],
+        members: this.utilsService.addBaseUrlToAvatar([session.user]),
         callId: call.id,
       });
     });
@@ -86,7 +91,6 @@ export class CallService {
 
   async handleHangUp(client: Socket): Promise<void> {
     const socketIds = await this.getCallSocketIds(client);
-    console.log({ length: socketIds.length });
     socketIds.map((socketId) => this.server.to(socketId).emit('hangup-server'));
   }
 

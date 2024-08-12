@@ -49,12 +49,14 @@ model UserChat {
 }
 
 model Chat {
-  id        String     @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String?
-  type      ChatType   @default(direct)
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at")
-  UserChat  UserChat[]
+  type      ChatType @default(direct)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  UserChat UserChat[]
+  Message  Message[]
 
   @@map("chats")
 }
@@ -70,6 +72,8 @@ model Message {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+
+  Chat Chat @relation(fields: [chatId], references: [id])
 
   @@map("messages")
 }

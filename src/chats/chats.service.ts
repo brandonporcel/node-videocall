@@ -30,6 +30,9 @@ export class ChatsService {
         },
         Message: {
           take: 50,
+          orderBy: {
+            createdAt: 'asc',
+          },
         },
       },
       where: {
@@ -99,31 +102,6 @@ export class ChatsService {
     });
   }
 
-  // SEND MESSAGES METHODS
-  // CHECK
-  // async handleSendMessage(client: Socket, payload: any) {
-  //   const members = payload.members;
-  //   const chat = await this.getChat(payload);
-  //   // const session = await this.getSession(client);
-
-  //   const message = await this.prismaService.message.create({
-  //     data: {
-  //       content: payload.message,
-  //       chatId: chat.id,
-  //       senderId: payload.senderId,
-  //       receivedAt: new Date(),
-  //       readedAt: null,
-  //     },
-  //   });
-
-  //   const targets = await this.prismaService.session.findMany({
-  //     select: { socketId: true },
-  //     where: { userId: members[0].id },
-  //   });
-  //   targets.map((target) => {
-  //     this.server.to(target.socketId).emit('receive-message', message);
-  //   });
-  // }
   async handleSendMessage(
     client: Socket,
     payload: { to: string; message: string },
@@ -200,36 +178,6 @@ export class ChatsService {
     });
     // this.server.to(client.id).emit('update-read-at', { payload });
   }
-  // CHECK
-
-  // private async getChat(payload: any) {
-  //   const { members, chatId } = payload;
-  //   console.log('members', members);
-
-  //   if (!members.includes((el: any) => el.id === payload.senderId)) {
-  //     members.push({
-  //       id: payload.senderId,
-  //     });
-  //   }
-
-  //   if (!chatId) {
-  //     return this.prismaService.chat.create({
-  //       data: {
-  //         name: null,
-  //         UserChat: {
-  //           createMany: {
-  //             data: members.map((member: User) => ({ userId: member.id })),
-  //           },
-  //         },
-  //       },
-  //     });
-  //   }
-  //   return this.prismaService.chat.findUnique({
-  //     where: {
-  //       id: chatId,
-  //     },
-  //   });
-  // }
 
   private async getUnReadMessages(client: Socket) {
     return await this.prismaService.message.findMany({

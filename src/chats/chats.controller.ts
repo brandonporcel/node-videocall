@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -12,6 +13,7 @@ import { GetUser } from '@common/decorators/get-user.decorator';
 import { ChatsService } from './chats.service';
 import { SearchDto } from './dto/search.dto';
 import { ChatsDto } from './dto/chats.dto';
+import { IsChatOwner } from './decorators/is-chat-owner.decorator';
 
 @Controller('chats')
 export class ChatsController {
@@ -39,5 +41,11 @@ export class ChatsController {
   @Auth()
   search(@Body() searchDto: SearchDto) {
     return this.chatsService.search(searchDto);
+  }
+
+  @Delete(':chatId')
+  @IsChatOwner()
+  deleteChat(@Param('chatId', ParseUUIDPipe) chatId: string) {
+    return this.chatsService.deleteChat(chatId);
   }
 }

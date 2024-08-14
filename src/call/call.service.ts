@@ -91,6 +91,18 @@ export class CallService {
 
   async handleHangUp(client: Socket): Promise<void> {
     const socketIds = await this.getCallSocketIds(client);
+    await this.prismaService.userCall.updateMany({
+      where: {
+        session: {
+          socketId: {
+            in: socketIds,
+          },
+        },
+      },
+      data: {
+        isActive: false,
+      },
+    });
     socketIds.map((socketId) => this.server.to(socketId).emit('hangup-server'));
   }
 

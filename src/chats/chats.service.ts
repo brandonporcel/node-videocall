@@ -6,6 +6,7 @@ import { SearchDto } from './dto/search.dto';
 import { UtilsService } from '@common/services/utils.service';
 import { ChatsDto } from './dto/chats.dto';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 @WebSocketGateway({ cors: true })
@@ -212,5 +213,14 @@ export class ChatsService {
     x.filtered = matchingUsers;
     x.usersWithAccount = matchingUsers;
     return x;
+  }
+
+  async deleteChat(chatId: string) {
+    await this.prismaService.message.deleteMany({ where: { chatId } });
+    return await this.prismaService.chat.delete({
+      where: {
+        id: chatId,
+      },
+    });
   }
 }

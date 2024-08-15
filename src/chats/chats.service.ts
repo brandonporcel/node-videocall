@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { Chat, User } from '@prisma/client';
+import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { PrismaService } from '@common/services/prisma.service';
 import { SearchDto } from './dto/search.dto';
 import { UtilsService } from '@common/services/utils.service';
 import { ChatsDto } from './dto/chats.dto';
-import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 @WebSocketGateway({ cors: true })
@@ -88,6 +87,9 @@ export class ChatsService {
         },
         Message: {
           take: 50,
+          orderBy: {
+            createdAt: 'asc',
+          },
         },
       },
     });
@@ -130,6 +132,9 @@ export class ChatsService {
       this.server
         .to(target.socketId)
         .emit(`receive-message/${chat.id}`, message);
+      if (sender.userId !== payload.to) {
+        this.server.to(target.socketId).emit('chat-inbox');
+      }
     });
 
     if (isNew) {
@@ -177,6 +182,7 @@ export class ChatsService {
       where: { id: payload.message.id },
       data: { readedAt: new Date() },
     });
+
     // this.server.to(client.id).emit('update-read-at', { payload });
   }
 

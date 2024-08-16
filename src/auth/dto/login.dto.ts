@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsString, Matches, MinLength } from 'class-validator';
+import { IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({
@@ -17,7 +17,7 @@ export class LoginDto {
   email: string;
 
   @ApiProperty({
-    description: 'User email',
+    description: 'User password',
     example: '1324asdF',
     nullable: false,
     minLength: 6,
@@ -30,4 +30,12 @@ export class LoginDto {
       'The password must have a Uppercase, lowercase letter and a number',
   })
   password: string;
+
+  @ApiProperty({
+    description: 'User OneSignalId',
+    example: 'da20618b-513e-4f09-976f-fd4735ca16eb',
+    nullable: true,
+  })
+  @IsOptional()
+  oneSignalId?: string;
 }

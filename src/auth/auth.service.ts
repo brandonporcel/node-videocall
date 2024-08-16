@@ -9,11 +9,13 @@ import * as bcryptjs from 'bcryptjs';
 import { UsersService } from '@users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { PrismaService } from '@common/services/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -37,7 +39,7 @@ export class AuthService {
     };
   }
 
-  async login({ email, password }: LoginDto) {
+  async login({ email, password, oneSignalId }: LoginDto) {
     const user = await this.usersService.user({ email });
     if (!user) {
       throw new UnauthorizedException('email is wrong');
@@ -46,6 +48,13 @@ export class AuthService {
     const isPasswordValid = await bcryptjs.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('password is wrong');
+    }
+
+    if (oneSignalId) {
+      await this.prismaService.user.update({
+        where: { id: user.id },
+        data: { oneSignalId },
+      });
     }
 
     return {

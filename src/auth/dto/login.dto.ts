@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsString, Matches, MinLength } from 'class-validator';
+import { IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({
@@ -36,6 +36,6 @@ export class LoginDto {
     example: 'da20618b-513e-4f09-976f-fd4735ca16eb',
     nullable: true,
   })
-  @Transform(({ value }) => value.trim())
+  @IsOptional()
   oneSignalId?: string;
 }

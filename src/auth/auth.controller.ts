@@ -35,4 +35,10 @@ export class AuthController {
   me(@GetUser() user: User) {
     return user;
   }
+
+  @Post('log')
+  log(@Body() d: { message: string }) {
+    console.log('log ', JSON.stringify(d.message));
+    return d;
+  }
 }

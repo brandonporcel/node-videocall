@@ -1,3 +1,4 @@
+import { OneSignalService } from '@common/services/onesignal.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { UtilsService } from '@common/services/utils.service';
 import { Injectable } from '@nestjs/common';
@@ -13,16 +14,34 @@ export class CallService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly utilsService: UtilsService,
+    private readonly onesignalService: OneSignalService,
   ) {}
 
   // CALL CREATE AND JOIN METHODS
 
   async handleCreateCall(client: Socket, payload: any): Promise<void> {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: payload.targetId },
+    });
+    console.log('check');
+    if (!user || !user.oneSignalId) {
+      console.log('no user');
+      return;
+    }
+
+    try {
+      this.onesignalService.sendCallNotification({
+        title: user.username,
+        userOneSignalId: user.oneSignalId,
+      });
+    } catch (error) {
+      console.log('err', JSON.stringify(error));
+    }
+
     // Create call
     const session = await this.getSessionWithUser(client);
     const call = await this.prismaService.call.create({
       data: {
-        // code: "aaa-aaa-aaa"
         UserCall: {
           createMany: {
             data: {

@@ -23,19 +23,16 @@ export class CallService {
     const user = await this.prismaService.user.findUnique({
       where: { id: payload.targetId },
     });
-    console.log('check');
-    if (!user || !user.oneSignalId) {
-      console.log('no user');
-      return;
-    }
 
-    try {
-      this.onesignalService.sendCallNotification({
-        title: user.username,
-        userOneSignalId: user.oneSignalId,
-      });
-    } catch (error) {
-      console.log('err', JSON.stringify(error));
+    if (user.oneSignalId) {
+      try {
+        this.onesignalService.sendCallNotification({
+          title: user.username,
+          userOneSignalId: user.oneSignalId,
+        });
+      } catch (error) {
+        console.log('err', JSON.stringify(error));
+      }
     }
 
     // Create call

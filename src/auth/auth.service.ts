@@ -10,6 +10,7 @@ import { UsersService } from '@users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { PrismaService } from '@common/services/prisma.service';
+import { OneSignalService } from '@common/services/onesignal.service';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly oneSignalService: OneSignalService,
   ) {}
 
   async register({ password, ...userData }: RegisterDto) {
@@ -51,6 +53,7 @@ export class AuthService {
     }
 
     if (oneSignalId) {
+      // await this.oneSignalService.deleteOldUser(user.oneSignalId);
       await this.prismaService.user.update({
         where: { id: user.id },
         data: { oneSignalId },

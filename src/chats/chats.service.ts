@@ -129,9 +129,7 @@ export class ChatsService {
     const user = await this.prismaService.user.findUnique({
       where: { id: payload.to },
     });
-    console.log('1');
     if (user.oneSignalId) {
-      console.log('2');
       this.sendPushNotificationMessage(user, payload.message, chat);
     }
 

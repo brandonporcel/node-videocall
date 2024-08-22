@@ -57,7 +57,6 @@ export class CallService {
     });
     targets.map((target) => {
       this.server.to(target.socketId).emit('recive-call', {
-        // members: [session.user],
         members: this.utilsService.addBaseUrlToAvatar([session.user]),
         callId: call.id,
       });

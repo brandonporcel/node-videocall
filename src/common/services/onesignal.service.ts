@@ -1,7 +1,6 @@
-// import { OSChannels } from '@common/enums/onesignal.enum';
-import { OSChannel } from '@common/enums/oneSignal.enum';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { OSChannel } from '@common/enums/oneSignal.enum';
 
 interface NotificationBody {
   userOneSignalId: string;
@@ -33,7 +32,7 @@ export class OneSignalService {
       include_aliases: { onesignal_id: [body.userOneSignalId] },
       headings: { en: body.title || 'Nombre usuario' },
       contents: { en: 'Videollamada entrante' },
-      // android_channel_id: OSChannel.IncomingCall,
+      android_channel_id: OSChannel.IncomingCall,
       buttons: [
         { id: 'id1', text: 'Contestar', icon: 'ic_menu_share' },
         { id: 'id2', text: 'Ignorar', icon: 'ic_menu_share' },
@@ -58,9 +57,8 @@ export class OneSignalService {
   }
 
   private async sendNotification(notificationData: any) {
-    console.log('notificationData: ', JSON.stringify(notificationData));
     try {
-      const response = await axios.post(
+      await axios.post(
         this.apiUrl,
         {
           ...notificationData,
@@ -72,7 +70,6 @@ export class OneSignalService {
           headers: this.headers,
         },
       );
-      console.log('Notification sent successfully:', response.data);
     } catch (error) {
       console.error('Error sending notification:', JSON.stringify(error));
     }

@@ -24,6 +24,7 @@ export class AuthGuard implements CanActivate {
 
     const token = this.extractTokenFromHeader(request);
     if (!token) {
+      console.log('no me paso token ', token);
       throw new UnauthorizedException();
     }
 
@@ -36,7 +37,8 @@ export class AuthGuard implements CanActivate {
       else throw new BadRequestException('User not found');
 
       return true;
-    } catch {
+    } catch (err) {
+      console.log('error en guard', err);
       throw new UnauthorizedException();
     }
   }

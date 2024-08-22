@@ -6,6 +6,7 @@ import { PrismaService } from '@common/services/prisma.service';
 import { SearchDto } from './dto/search.dto';
 import { UtilsService } from '@common/services/utils.service';
 import { ChatsDto } from './dto/chats.dto';
+import { OneSignalService } from '@common/services/onesignal.service';
 
 @Injectable()
 @WebSocketGateway({ cors: true })
@@ -15,6 +16,7 @@ export class ChatsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly utilsService: UtilsService,
+    private readonly onesignalService: OneSignalService,
   ) {}
 
   async getChats(user: User, chatsDto: ChatsDto) {
@@ -123,6 +125,16 @@ export class ChatsService {
         readedAt: null,
       },
     });
+
+    const user = await this.prismaService.user.findUnique({
+      where: { id: payload.to },
+    });
+    console.log('1');
+    if (user.oneSignalId) {
+      console.log('2');
+      this.sendPushNotificationMessage(user, payload.message, chat);
+    }
+
     const targets = await this.prismaService.session.findMany({
       select: { socketId: true },
       where: { userId: { in: [payload.to, sender.userId] } },
@@ -160,37 +172,26 @@ export class ChatsService {
     return { isNew: true, chat: newChat };
   }
 
-  private async handleUserChats(chat: Chat, members: User[]) {
-    const userChats = await this.prismaService.userChat.findMany({
-      where: { chatId: chat.id },
-    });
-    if (userChats.length !== 0) return;
-
-    members.map(async (user) => {
-      await this.prismaService.userChat.create({
-        data: {
+  async sendPushNotificationMessage(user: User, msg: string, chat: Chat) {
+    try {
+      this.onesignalService.sendMsgNotification(
+        {
+          msg,
           userId: user.id,
-          chatId: chat.id,
+          title: user.username,
+          userOneSignalId: user.oneSignalId,
         },
-      });
-    });
+        { chatId: chat.id },
+      );
+    } catch (error) {
+      console.log('err', JSON.stringify(error));
+    }
   }
-  async handleReceiveMessage(client: Socket, payload: any) {
-    const messages = await this.getUnReadMessages(client);
 
+  async handleReceiveMessage(_client: Socket, payload: any) {
     await this.prismaService.message.update({
       where: { id: payload.message.id },
       data: { readedAt: new Date() },
-    });
-
-    // this.server.to(client.id).emit('update-read-at', { payload });
-  }
-
-  private async getUnReadMessages(client: Socket) {
-    return await this.prismaService.message.findMany({
-      where: {
-        readedAt: null,
-      },
     });
   }
 

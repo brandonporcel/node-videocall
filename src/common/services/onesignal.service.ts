@@ -1,47 +1,80 @@
 // import { OSChannels } from '@common/enums/onesignal.enum';
+import { OSChannel } from '@common/enums/oneSignal.enum';
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 
-type SendCallNotificationBody = {
+interface NotificationBody {
   userOneSignalId: string;
   title: string;
-};
+}
+
+interface SendCallNotificationBody extends NotificationBody {}
+
+interface SendMsgNotificationBody extends NotificationBody {
+  userId: string;
+  msg: string;
+}
 
 @Injectable()
 export class OneSignalService {
   private readonly apiKey = process.env.ONESIGNAL_API_KEY;
   private readonly appId = process.env.ONESIGNAL_APP_ID;
+  private apiUrl = 'https://onesignal.com/api/v1/notifications';
+  private headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Basic ${this.apiKey}`,
+  };
 
   constructor() {}
 
   async sendCallNotification(body: SendCallNotificationBody) {
+    const notificationData = {
+      include_aliases: { onesignal_id: [body.userOneSignalId] },
+      headings: { en: body.title || 'Nombre usuario' },
+      contents: { en: 'Videollamada entrante' },
+      // android_channel_id: OSChannel.IncomingCall,
+      buttons: [
+        { id: 'id1', text: 'Contestar', icon: 'ic_menu_share' },
+        { id: 'id2', text: 'Ignorar', icon: 'ic_menu_share' },
+      ],
+    };
+
+    await this.sendNotification(notificationData);
+  }
+
+  async sendMsgNotification(body: SendMsgNotificationBody, data: any) {
+    const notificationData = {
+      include_aliases: { onesignal_id: [body.userOneSignalId] },
+      headings: { en: body.title || 'Nombre usuario' },
+      contents: { en: body.msg },
+      data: {
+        type: 'new-message',
+        ...data,
+      },
+    };
+
+    await this.sendNotification(notificationData);
+  }
+
+  private async sendNotification(notificationData: any) {
+    console.log('notificationData: ', JSON.stringify(notificationData));
     try {
-      const a = await axios.post(
-        'https://onesignal.com/api/v1/notifications',
+      const response = await axios.post(
+        this.apiUrl,
         {
+          ...notificationData,
           app_id: this.appId,
           name: 'qubit notification',
-          include_aliases: { onesignal_id: [body.userOneSignalId] },
           target_channel: 'push',
-          headings: { en: body.title || 'Nombre usuario' },
-          contents: { en: 'Videollamada entrante' },
-          android_channel_id: '7936279d-eb47-4989-b227-3f554eb42d2a',
-          buttons: [
-            { id: 'id1', text: 'Contestar', icon: 'ic_menu_share' },
-            { id: 'id2', text: 'Ignorar', icon: 'ic_menu_share' },
-          ],
         },
         {
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: `Basic ${this.apiKey}`,
-          },
+          headers: this.headers,
         },
       );
-      console.log('a.data', a.data);
+      console.log('Notification sent successfully:', response.data);
     } catch (error) {
-      console.error('dentro ', JSON.stringify(error));
+      console.error('Error sending notification:', JSON.stringify(error));
     }
   }
 

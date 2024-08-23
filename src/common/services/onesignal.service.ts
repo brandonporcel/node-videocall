@@ -78,9 +78,7 @@ export class OneSignalService {
   async deleteOldUser(oneSignalId: string) {
     const apiKey = process.env.ONESIGNAL_API_KEY;
     const appId = process.env.ONESIGNAL_APP_ID;
-    console.log('appId', appId);
-    console.log('apiKey', apiKey);
-    console.log('oneSignalId', oneSignalId);
+
     await axios.delete(
       `https://api.onesignal.com/apps/${appId}/users/by/onesignal_id/${oneSignalId}`,
       {

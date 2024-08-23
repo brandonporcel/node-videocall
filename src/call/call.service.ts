@@ -110,7 +110,7 @@ export class CallService {
       where: {
         session: {
           socketId: {
-            in: socketIds,
+            in: [...socketIds, client.id],
           },
         },
       },

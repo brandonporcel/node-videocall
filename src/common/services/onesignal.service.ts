@@ -7,7 +7,9 @@ interface NotificationBody {
   title: string;
 }
 
-interface SendCallNotificationBody extends NotificationBody {}
+interface SendCallNotificationBody extends NotificationBody {
+  callId: string;
+}
 
 interface SendMsgNotificationBody extends NotificationBody {
   userId: string;
@@ -37,6 +39,10 @@ export class OneSignalService {
         { id: 'id1', text: 'Contestar', icon: 'ic_menu_share' },
         { id: 'id2', text: 'Ignorar', icon: 'ic_menu_share' },
       ],
+      data: {
+        callId: body.callId,
+        name: body.title,
+      },
     };
 
     await this.sendNotification(notificationData);

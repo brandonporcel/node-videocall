@@ -20,20 +20,10 @@ export class CallService {
   // CALL CREATE AND JOIN METHODS
 
   async handleCreateCall(client: Socket, payload: any): Promise<void> {
+    console.log('creaaaa');
     const user = await this.prismaService.user.findUnique({
       where: { id: payload.targetId },
     });
-
-    if (user.oneSignalId) {
-      try {
-        this.onesignalService.sendCallNotification({
-          title: user.username,
-          userOneSignalId: user.oneSignalId,
-        });
-      } catch (error) {
-        console.log('err', JSON.stringify(error));
-      }
-    }
 
     // Create call
     const session = await this.getSessionWithUser(client);
@@ -49,6 +39,18 @@ export class CallService {
         },
       },
     });
+
+    if (user.oneSignalId) {
+      try {
+        this.onesignalService.sendCallNotification({
+          title: session.user.username,
+          userOneSignalId: user.oneSignalId,
+          callId: call.id,
+        });
+      } catch (error) {
+        console.log('err', JSON.stringify(error));
+      }
+    }
 
     // Send call invite
     const targets = await this.prismaService.session.findMany({

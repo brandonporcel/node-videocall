@@ -22,10 +22,25 @@ export class AuthService {
   ) {}
 
   async register({ password, ...userData }: RegisterDto) {
-    const user = await this.usersService.user({ email: userData.email });
+    const users = await this.usersService.users({
+      where: {
+        OR: [
+          {
+            email: userData.email,
+          },
+          {
+            phoneNumber: userData.phoneNumber,
+          },
+        ],
+      },
+    });
 
-    if (user) {
-      throw new BadRequestException('Email already exists');
+    if (users.length) {
+      if (users[0].email === userData.email) {
+        throw new BadRequestException('Email already exists');
+      } else {
+        throw new BadRequestException('Phone already exists');
+      }
     }
 
     const newUser = await this.usersService.createUser({

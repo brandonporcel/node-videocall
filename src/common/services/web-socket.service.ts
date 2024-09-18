@@ -41,9 +41,11 @@ export class WebSocketService {
       await this.prismaService.session.create({
         data: { userId: user.id, socketId: socket.id },
       });
+      this.server.to(socket.id).emit('connection-success');
 
       return true;
     } catch (error) {
+      this.server.to(socket.id).emit('connection-error');
       this.logger.error(token, error);
       socket.disconnect();
     }

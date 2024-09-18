@@ -55,7 +55,9 @@ export class CallService {
     // Send call invite
     const targets = await this.prismaService.session.findMany({
       select: { socketId: true },
-      where: { userId: payload.targetId },
+      where: {
+        userId: payload.targetId,
+      },
     });
     targets.map((target) => {
       this.server.to(target.socketId).emit('recive-call', {

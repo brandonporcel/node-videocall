@@ -21,4 +21,9 @@ export class ChatsGateway {
   handleReceiveMessage(client: Socket, payload: any) {
     this.chatsService.handleReceiveMessage(client, payload);
   }
+
+  @SubscribeMessage('sync-chat')
+  syncChat(client: Socket, payload: any) {
+    this.chatsService.syncChat(client, payload);
+  }
 }

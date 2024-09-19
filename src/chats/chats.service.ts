@@ -202,6 +202,14 @@ export class ChatsService {
     });
   }
 
+  async syncChat(_client: Socket, payload: any) {
+    const sender = await this.prismaService.session.findFirst({
+      where: { userId: payload.otherPersonId },
+    });
+    if (!sender) return;
+    this.server.to(sender.socketId).emit(`sync-chat/${payload.chatId}`);
+  }
+
   private async getSession(client: Socket) {
     return await this.prismaService.session.findUniqueOrThrow({
       where: { socketId: client.id },

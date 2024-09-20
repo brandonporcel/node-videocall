@@ -41,4 +41,10 @@ export class AuthController {
     console.log('log ', JSON.stringify(d.message));
     return d;
   }
+
+  @Post('logout')
+  @Auth()
+  logout(@GetUser() user: User) {
+    return this.authService.logout(user);
+  }
 }

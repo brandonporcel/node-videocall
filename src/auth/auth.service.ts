@@ -11,6 +11,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { PrismaService } from '@common/services/prisma.service';
 import { OneSignalService } from '@common/services/onesignal.service';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -83,5 +84,12 @@ export class AuthService {
 
   private async generateToken(userId: string) {
     return await this.jwtService.signAsync({ id: userId });
+  }
+
+  async logout({ id }: User) {
+    return await this.prismaService.user.update({
+      where: { id },
+      data: { oneSignalId: null },
+    });
   }
 }

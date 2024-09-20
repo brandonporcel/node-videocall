@@ -20,10 +20,32 @@ export class CallService {
   // CALL CREATE AND JOIN METHODS
 
   async handleCreateCall(client: Socket, payload: any): Promise<void> {
-    console.log('creaaaa');
     const user = await this.prismaService.user.findUnique({
       where: { id: payload.targetId },
+      include: {
+        Sessions: {
+          include: {
+            UserCall: true,
+          },
+        },
+      },
     });
+    if (
+      user.Sessions.map((x) => x.UserCall.some((y) => y.isActive)).some(
+        (x) => x,
+      )
+    ) {
+      this.server
+        .to(client.id)
+        .emit('created-call-error', 'El usuario esta ocupado');
+      return;
+    }
+    if (!user.Sessions.length && !user.oneSignalId) {
+      this.server
+        .to(client.id)
+        .emit('created-call-error', 'El usuario no se encuentra disponible');
+      return;
+    }
 
     // Create call
     const session = await this.getSessionWithUser(client);
@@ -53,12 +75,7 @@ export class CallService {
     }
 
     // Send call invite
-    const targets = await this.prismaService.session.findMany({
-      select: { socketId: true },
-      where: {
-        userId: payload.targetId,
-      },
-    });
+    const targets = user.Sessions;
     targets.map((target) => {
       this.server.to(target.socketId).emit('recive-call', {
         members: this.utilsService.addBaseUrlToAvatar([session.user]),

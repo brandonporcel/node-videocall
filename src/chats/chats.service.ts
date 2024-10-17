@@ -20,7 +20,7 @@ export class ChatsService {
   ) {}
 
   async getChats(user: User, chatsDto: ChatsDto) {
-    const chats = await this.prismaService.chat.findMany({
+    let chats = await this.prismaService.chat.findMany({
       include: {
         UserChat: {
           where: {
@@ -45,6 +45,7 @@ export class ChatsService {
         },
       },
     });
+    chats = chats.filter((chats) => chats.Message.length);
 
     const contactsMap = new Map();
     chatsDto.contacts.forEach((contact) => {
@@ -88,13 +89,17 @@ export class ChatsService {
           },
         },
         Message: {
-          take: 50,
           orderBy: {
             createdAt: 'asc',
           },
         },
       },
     });
+  }
+
+  async forceGetChat(fromId: string, toId: string) {
+    const data = await this.getOrCreateChat([fromId, toId]);
+    return data.chat;
   }
 
   async getChatHistorial(chatId: string) {
@@ -116,6 +121,7 @@ export class ChatsService {
       sender.userId,
       payload.to,
     ]);
+
     const message = await this.prismaService.message.create({
       data: {
         content: payload.message,
@@ -130,7 +136,12 @@ export class ChatsService {
       where: { id: payload.to },
     });
     if (user.oneSignalId) {
-      this.sendPushNotificationMessage(user, payload.message, chat);
+      this.sendPushNotificationMessage(
+        { ...sender.user, oneSignalId: user.oneSignalId },
+        // payload.message,
+        'Tenes un nuevo mensaje',
+        chat,
+      );
     }
 
     const targets = await this.prismaService.session.findMany({
@@ -155,7 +166,7 @@ export class ChatsService {
   private async getOrCreateChat(userIds: string[]) {
     const chat = await this.getChat(userIds[0], userIds[1]);
     if (chat) return { isNew: false, chat };
-    const newChat = await this.prismaService.chat.create({
+    const newChat: any = await this.prismaService.chat.create({
       data: {
         UserChat: {
           createMany: {
@@ -164,18 +175,16 @@ export class ChatsService {
         },
       },
       include: {
-        UserChat: true,
-        Message: true
+        UserChat: { include: { User: true } },
+        Message: true,
       },
     });
+    newChat.Message = [];
     return { isNew: true, chat: newChat };
   }
 
-  async createOrGetChat(fromUserId: string, toUserId: string){
-    const { chat } = await this.getOrCreateChat([
-      fromUserId,
-      toUserId
-    ]);
+  async createOrGetChat(fromUserId: string, toUserId: string) {
+    const { chat } = await this.getOrCreateChat([fromUserId, toUserId]);
     return chat;
   }
 
@@ -213,6 +222,9 @@ export class ChatsService {
   private async getSession(client: Socket) {
     return await this.prismaService.session.findUniqueOrThrow({
       where: { socketId: client.id },
+      include: {
+        user: true,
+      },
     });
   }
 

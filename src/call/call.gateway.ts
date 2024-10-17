@@ -22,6 +22,16 @@ export class CallGateway {
     await this.callService.handleAcceptCall(client, payload);
   }
 
+  @SubscribeMessage('reject-call')
+  async handleRejectCall(client: Socket, payload: any): Promise<void> {
+    await this.callService.handleRejectCall(client, payload);
+  }
+
+  @SubscribeMessage('remote-controls')
+  async handleStreamCall(client: Socket, payload: any): Promise<void> {
+    await this.callService.handleStreamCall(client, payload);
+  }
+
   @SubscribeMessage('offer')
   async handleOffer(client: Socket, payload: any): Promise<void> {
     await this.callService.handleOffer(client, payload);

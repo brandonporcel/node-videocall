@@ -9,6 +9,7 @@ interface NotificationBody {
 
 interface SendCallNotificationBody extends NotificationBody {
   callId: string;
+  phoneNumber: string;
 }
 
 interface SendMsgNotificationBody extends NotificationBody {
@@ -35,17 +36,15 @@ export class OneSignalService {
       headings: { en: body.title || 'Nombre usuario' },
       contents: { en: 'Videollamada entrante' },
       android_channel_id: OSChannel.IncomingCall,
-      buttons: [
-        { id: 'id1', text: 'Contestar', icon: 'ic_menu_share' },
-        { id: 'id2', text: 'Ignorar', icon: 'ic_menu_share' },
-      ],
+      // priority: 10,
       data: {
         callId: body.callId,
         name: body.title,
+        phoneNumber: body.phoneNumber,
       },
     };
 
-    await this.sendNotification(notificationData);
+    return await this.sendNotification(notificationData);
   }
 
   async sendMsgNotification(body: SendMsgNotificationBody, data: any) {
@@ -64,7 +63,7 @@ export class OneSignalService {
 
   private async sendNotification(notificationData: any) {
     try {
-      await axios.post(
+      const resp = await axios.post(
         this.apiUrl,
         {
           ...notificationData,
@@ -76,6 +75,19 @@ export class OneSignalService {
           headers: this.headers,
         },
       );
+      return resp.data;
+    } catch (error) {
+      console.error('Error sending notification:', JSON.stringify(error));
+    }
+  }
+
+  async deleteNotification(notificationId: string) {
+    try {
+      const appId = process.env.ONESIGNAL_APP_ID;
+      await axios.post(`${this.apiUrl}/${notificationId}?app_id=${appId}`, {
+        method: 'DELETE',
+        headers: this.headers,
+      });
     } catch (error) {
       console.error('Error sending notification:', JSON.stringify(error));
     }

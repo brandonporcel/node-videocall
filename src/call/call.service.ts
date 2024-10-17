@@ -27,9 +27,13 @@ export class CallService {
           include: {
             UserCall: true,
           },
+          where: {
+            deletedAt: null,
+          },
         },
       },
     });
+
     if (
       user.Sessions.map((x) => x.UserCall.some((y) => y.isActive)).some(
         (x) => x,
@@ -37,7 +41,7 @@ export class CallService {
     ) {
       this.server
         .to(client.id)
-        .emit('created-call-error', 'El usuario esta ocupado');
+        .emit('created-call-error', 'El usuario está ocupado');
       return;
     }
     if (!user.Sessions.length && !user.oneSignalId) {
@@ -53,10 +57,16 @@ export class CallService {
       data: {
         UserCall: {
           createMany: {
-            data: {
-              sessionId: session.id,
-              isActive: true,
-            },
+            data: [
+              {
+                sessionId: session.id,
+                isActive: true,
+              },
+              ...user.Sessions.map((session) => ({
+                sessionId: session.id,
+                isActive: false,
+              })),
+            ],
           },
         },
       },
@@ -64,10 +74,16 @@ export class CallService {
 
     if (user.oneSignalId) {
       try {
-        this.onesignalService.sendCallNotification({
+        const resp = await this.onesignalService.sendCallNotification({
           title: session.user.username,
+          phoneNumber: session.user.phoneNumber,
           userOneSignalId: user.oneSignalId,
           callId: call.id,
+        });
+        console.log({ resp });
+        await this.prismaService.userCall.updateMany({
+          where: { callId: call.id, session: { socketId: { not: client.id } } },
+          data: { notificationId: resp.id },
         });
       } catch (error) {
         console.log('err', JSON.stringify(error));
@@ -95,22 +111,60 @@ export class CallService {
 
   async handleAcceptCall(client: Socket, payload: any): Promise<void> {
     const session = await this.getSession(client);
-    await this.prismaService.call.update({
+    const userCall = await this.prismaService.userCall.findFirst({
+      where: {
+        callId: payload.callId as string,
+        sessionId: session.id,
+      },
+    });
+    if (userCall) {
+      await this.prismaService.userCall.update({
+        where: { id: userCall.id },
+        data: { isActive: true },
+      });
+    } else {
+      await this.prismaService.userCall.create({
+        data: { callId: payload.callId, sessionId: session.id },
+      });
+    }
+  }
+
+  async handleRejectCall(client: Socket, payload: any): Promise<void> {
+    const call = await this.prismaService.call.findUnique({
       where: { id: payload.callId },
-      data: {
+      include: {
         UserCall: {
-          createMany: {
-            data: {
-              sessionId: session.id,
-              isActive: true,
+          include: {
+            session: {
+              select: {
+                socketId: true,
+              },
             },
           },
         },
       },
     });
+    await this.prismaService.userCall.updateMany({
+      where: {
+        callId: payload.callId,
+      },
+      data: {
+        isActive: false,
+      },
+    });
+    call.UserCall.map((userCall) =>
+      this.server.emit('call-rejected', userCall.session.socketId),
+    );
   }
 
   // CALL INTERNAL METHODS
+
+  async handleStreamCall(client: Socket, payload: any): Promise<void> {
+    const socketIds = await this.getCallSocketIds(client);
+    socketIds.map((socketId) =>
+      this.server.to(socketId).emit('remote-controls', payload),
+    );
+  }
 
   async handleOffer(client: Socket, payload: any): Promise<void> {
     const socketIds = await this.getCallSocketIds(client);
@@ -135,6 +189,7 @@ export class CallService {
 
   async handleHangUp(client: Socket): Promise<void> {
     const socketIds = await this.getCallSocketIds(client);
+    await this.removeCall(client.id);
     await this.prismaService.userCall.updateMany({
       where: {
         session: {
@@ -148,6 +203,7 @@ export class CallService {
       },
     });
     socketIds.map((socketId) => this.server.to(socketId).emit('hangup-server'));
+    this.server.to(client.id).emit('hangup-server');
   }
 
   // PRIVATE HANDLERS
@@ -197,6 +253,44 @@ export class CallService {
       (userCall) => userCall.session.socketId,
     );
     return socketIds.filter((socketId) => socketId !== client.id);
+  }
+
+  private async removeCall(socketId: string) {
+    const session = await this.prismaService.session.findUniqueOrThrow({
+      where: { socketId: socketId },
+      include: {
+        UserCall: {
+          where: {
+            isActive: true,
+          },
+          include: {
+            call: {
+              include: {
+                UserCall: {
+                  include: {
+                    session: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    const call = session.UserCall[0].call;
+    if (call) {
+      const promises = call.UserCall.map(async (user) => {
+        if (user.notificationId) {
+          try {
+            // await this.onesignalService.deleteNotification(user.notificationId);
+          } catch (err) {
+            console.log(err);
+          }
+        }
+        this.server.to(user.session.socketId).emit(`call-deleted/${call.id}`);
+      });
+      await Promise.all(promises);
+    }
   }
 
   //Empty calls cleaner

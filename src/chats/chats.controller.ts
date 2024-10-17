@@ -31,6 +31,12 @@ export class ChatsController {
     return this.chatsService.getChat(user.id, targetId);
   }
 
+  @Get(':targetId/force')
+  @Auth()
+  forceGetChat(@Param('targetId') targetId: string, @GetUser() user: User) {
+    return this.chatsService.forceGetChat(user.id, targetId);
+  }
+
   @Get('historial/:chatId')
   @Auth()
   getChatHistorial(@Param('chatId', ParseUUIDPipe) chatId: string) {

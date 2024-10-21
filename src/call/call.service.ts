@@ -85,6 +85,14 @@ export class CallService {
     this.server.to(client.id).emit('created-call', call.id);
   }
 
+  async getUserCallByCallId(callId: string) {
+    return await this.prismaService.userCall.findFirstOrThrow({
+      where: {
+        callId: callId
+      }
+    })
+  }
+
   async handleAcceptCall(client: Socket, payload: any): Promise<void> {
     const session = await this.getSession(client);
     await this.prismaService.call.update({

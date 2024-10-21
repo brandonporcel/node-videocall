@@ -165,9 +165,18 @@ export class ChatsService {
       },
       include: {
         UserChat: true,
+        Message: true
       },
     });
     return { isNew: true, chat: newChat };
+  }
+
+  async createOrGetChat(fromUserId: string, toUserId: string){
+    const { chat } = await this.getOrCreateChat([
+      fromUserId,
+      toUserId
+    ]);
+    return chat;
   }
 
   async sendPushNotificationMessage(user: User, msg: string, chat: Chat) {

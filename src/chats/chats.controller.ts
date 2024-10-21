@@ -48,4 +48,10 @@ export class ChatsController {
   deleteChat(@Param('chatId', ParseUUIDPipe) chatId: string) {
     return this.chatsService.deleteChat(chatId);
   }
+
+  @Get('get-or-create-chat/:toUserId')
+  @Auth()
+  getOrCreateChat(@GetUser() user: User, @Param('toUserId') toUserId: string) {
+    return this.chatsService.createOrGetChat(user.id, toUserId);
+  }
 }

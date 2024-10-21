@@ -31,7 +31,7 @@ export class ChatsService {
           },
         },
         Message: {
-          take: 50,
+          // take: 50,
           orderBy: {
             createdAt: 'asc',
           },
@@ -99,6 +99,7 @@ export class ChatsService {
 
   async forceGetChat(fromId: string, toId: string) {
     const data = await this.getOrCreateChat([fromId, toId]);
+    data.chat.UserChat = data.chat.UserChat.filter((x) => x.userId !== fromId);
     return data.chat;
   }
 
@@ -166,7 +167,7 @@ export class ChatsService {
   private async getOrCreateChat(userIds: string[]) {
     const chat = await this.getChat(userIds[0], userIds[1]);
     if (chat) return { isNew: false, chat };
-    const newChat: any = await this.prismaService.chat.create({
+    const newChat = await this.prismaService.chat.create({
       data: {
         UserChat: {
           createMany: {
@@ -179,7 +180,6 @@ export class ChatsService {
         Message: true,
       },
     });
-    newChat.Message = [];
     return { isNew: true, chat: newChat };
   }
 

@@ -249,12 +249,23 @@ export class ChatsService {
     return x;
   }
 
-  async deleteChat(chatId: string) {
-    await this.prismaService.message.deleteMany({ where: { chatId } });
-    await this.prismaService.userChat.deleteMany({ where: { chatId } });
-    return await this.prismaService.chat.delete({
+  async deleteChats(chatsToDelete: [string]){
+    await this.prismaService.message.deleteMany({ where: { 
+      chatId: {
+        in: chatsToDelete
+      }
+    }});
+    await this.prismaService.userChat.deleteMany({ where: { 
+      chatId: {
+        in: chatsToDelete
+      }
+     }
+    });
+    return await this.prismaService.chat.deleteMany({
       where: {
-        id: chatId,
+        id: {
+          in: chatsToDelete
+        }
       },
     });
   }

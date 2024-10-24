@@ -106,7 +106,7 @@ export class ChatsService {
   async getChatHistorial(chatId: string) {
     return await this.prismaService.message.findMany({
       where: { chatId },
-      take: 50,
+      // take: 50,
       orderBy: {
         createdAt: 'asc',
       },
@@ -251,6 +251,7 @@ export class ChatsService {
 
   async deleteChat(chatId: string) {
     await this.prismaService.message.deleteMany({ where: { chatId } });
+    await this.prismaService.userChat.deleteMany({ where: { chatId } });
     return await this.prismaService.chat.delete({
       where: {
         id: chatId,

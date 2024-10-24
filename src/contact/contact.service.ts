@@ -36,7 +36,9 @@ export class ContactService {
                   include: { User: true },
                 },
                 Message: {
-                  take: 50,
+                  orderBy: {
+                    createdAt: 'asc',
+                  },
                 },
               },
             },
